@@ -94,35 +94,35 @@ Detections will be published on the `W_landmark` topic in the odometry frame. Ot
 ### Deployment
 1. Open 4 terminals
 2. In terminal 1: 
-    1. '''$ ssh team8@10.0.4.5 '''
+    1. `$ ssh team8@10.0.4.5 `
     2. Password: smb
 3. In terminal 2:
-    1. '''$ hostname -I''' -> Rememeber the hostname IP address
-    2. '''$ export ROS_MASTER_URI=http://10.0.4.5:11311'''
-    3. '''$ export ROS_IP=10.0.4.130''' (assuming '''$hostname -I''' returned 10.0.4.130)
-    4. '''$ cd Artefact_Mapping'''
-    5. '''$ source devel/setup.bash'''
-    6. '''$ roslaunch artefact_mapping artefact_mapping.launch'''
+    1. `$ ssh team8@10.0.4.5`
+    2. Password: smb
+    3. `$ cd Artefact_Mapping`
+    4. `$ source devel/setup.bash`
+    5. `$ roslaunch artefact_mapping artefact_mapping.launch`
 4. In terminal 3:
-    1. '''$ export ROS_MASTER_URI=http://10.0.4.5:11311'''
-    2. '''$ export ROS_IP=10.0.4.130''' 
-    3. '''$ rqt_image_view'''
-    4. In rqt_image_view, select topic /versavis/cam0/image_raw. Make sure the camera feed from SMB264 is being broadcasted. You can now see what the robot is seeing
+    1. `$ hostname -I` -> Rememeber the hostname IP address
+    2. `$ export ROS_MASTER_URI=http://10.0.4.5:11311`
+    3. `$ export ROS_IP=10.0.4.130` 
+    4. `$ rqt_image_view`
+    5. In rqt_image_view, select topic /versavis/cam0/image_raw. Make sure the camera feed from SMB264 is being broadcasted. You can now see what the robot is seeing
 5. In terminal 4:
-    1. '''$ export ROS_MASTER_URI=http://10.0.4.5:11311'''
-    2. '''$ export ROS_IP=10.0.4.130'''
-    3. '''rosbag record -O competition.bag /tf /tf_static /versavis/cam0/image_raw /artefact_mapping/image_debug'''
+    1. `$ export ROS_MASTER_URI=http://10.0.4.5:11311`
+    2. `$ export ROS_IP=10.0.4.130`
+    3. `rosbag record -O competition.bag /tf /tf_static /versavis/cam0/image_raw /artefact_mapping/image_debug`
     4. A recording the competition will be available is the home directory of this base station computer
 6. It is important to keep connection to the robot during the run. Make sure connection is reliable!
 7. Once the run is done, kill the tasks in terminal 2,3 and 4
 8. Copy the artifacts.csv file from SMB to the base station computer. In terminal 2:
-    1. '''$ scp smb264@10.0.4.5:/tmp/artifacts.csv yoruseer@10.0.4.130:/home/yoruseer'''. This should copy the rosbag from the robot to the base station computer
+    1. `$ scp smb264@10.0.4.5:/tmp/artifacts.csv yoruseer@10.0.4.130:/home/yoruseer`. This should copy the rosbag from the robot to the base station computer
 
 ### Post processing steps
 1. From now on, no need for any SSH connection to the robot. You should have the artifacts.csv and the competition.bag files on the base station computer
 2. Open artifacts.csv in your favorite spreadsheet software. 
-3. In a terminal, run '''$ rosbag play competition.bag -p'''. If the rosbag lasts more the 10 minutes, you can speed it up by running '''$ rosbag play competition.bag -p -r1.5''' where 1.5 is the relative speedup (to be adapted depending on how long the recording is)
-5. Run '''$ rqt_image_view'''. Select the topic /artefact_mapping/image_debug.
+3. In a terminal, run `$ rosbag play competition.bag -p`. If the rosbag lasts more the 10 minutes, you can speed it up by running `$ rosbag play competition.bag -p -r1.5` where 1.5 is the relative speedup (to be adapted depending on how long the recording is)
+5. Run `$ rqt_image_view`. Select the topic /artefact_mapping/image_debug.
 4. Visible on your screen should be:
     1. The *csv file
     2. rqt_image_view
