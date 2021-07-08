@@ -88,7 +88,7 @@ Detections will be published on the `W_landmark` topic in the odometry frame. Ot
     6. odom_tf_frame = /tracking_camera_odom
     7. map_tf_frame = /map$
     8. darknet_detection_threshold = 0.2
-    9 image_topic_buffer = 1000
+    9. image_topic_buffer = 1000
     10. Save the launch file 
 
 ### Deployment
@@ -105,7 +105,7 @@ Detections will be published on the `W_landmark` topic in the odometry frame. Ot
 4. In terminal 3:
     1. `$ hostname -I` -> Rememeber the hostname IP address
     2. `$ export ROS_MASTER_URI=http://10.0.4.5:11311`
-    3. `$ export ROS_IP=10.0.4.130` 
+    3. `$ export ROS_IP=10.0.4.130` (or whatever `hostname -I` outputted)
     4. `$ rqt_image_view`
     5. In rqt_image_view, select topic /versavis/cam0/image_raw. Make sure the camera feed from SMB264 is being broadcasted. You can now see what the robot is seeing
 5. In terminal 4:
@@ -128,5 +128,5 @@ Detections will be published on the `W_landmark` topic in the odometry frame. Ot
     2. rqt_image_view
     3. The terminal window with the rosbag running
 5. Click on the terminal window. Press the space bar to launch the rosbag
-6. Many false positives are to be expected in the detections. When a true positive occurs, highlight it in the csv file. Make sure the timestamp corresponds to the timestamp shown on the terminal where the rosbag is played. If things are going to quickly to appropriatly highlight the true positives, feel free to pause the rosbag playing by <strong>pressing the space bar<strong/>
+6. Many false positives are to be expected in the detections. When a true positive occurs, highlight it in the csv file. Make sure the timestamp corresponds to the timestamp shown on the terminal where the rosbag is played. If things are going to quickly to appropriatly highlight the true positives, feel free to pause the rosbag playing by **pressing the space bar**
 7. Once the rosbag fully played, delete all non highlighted detections. Handover this *csv file to the judges.
