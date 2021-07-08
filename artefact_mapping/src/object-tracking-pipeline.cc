@@ -27,6 +27,8 @@ DEFINE_string(sensor_tf_frame, "/blackfly_right_optical_link",
               "Camera TF frame.");
 DEFINE_string(odom_tf_frame, "/odom", "Odometry TF frame.");
 
+DEFINE_string(map_tf_frame, "/map_tf_frame", "Map TF frame.");
+
 DEFINE_bool(publish_debug_images, false,
             "Whether to publish the debug image with tracking information.");
 
@@ -63,10 +65,11 @@ void ObjectTrackingPipeline::imageCallback(
     const sensor_msgs::ImageConstPtr &image_message) {
 
   cv_bridge::CvImagePtr cv_ptr =
-      cv_bridge::toCvCopy(image_message, sensor_msgs::image_encodings::RGB8);
+  	//ROS_INFO(image_message->encoding);
+      cv_bridge::toCvCopy(image_message, sensor_msgs::image_encodings::BGR8);
   // Image message seems to be misconfigured
   // when requesting rgb the image we get is actually bgr
-  cv_ptr->encoding = "bgr8";
+  //cv_ptr->encoding = "bgr8";
 
   tracker_.processFrame(cv_ptr->image, image_message->header.stamp);
 
@@ -95,6 +98,8 @@ void ObjectTrackingPipeline::triangulateTracks(
   CHECK(camera);
   aslam::Transformation T_B_C =
       vi_map::getSelectedNCamera(sensor_manager_)->get_T_C_B(0u).inverse();
+  
+  tf::StampedTransform transform_of2cf;
   for (const Observation &observation : observations) {
     VLOG(2) << "Add observation with ts " << observation.timestamp_.sec
             << "." << observation.timestamp_.nsec;
@@ -129,6 +134,16 @@ void ObjectTrackingPipeline::triangulateTracks(
     if (observation.getClass() != -1) {
       class_labels.emplace_back(observation.getClass());
     }
+      
+    try {
+      tf_listener_->lookupTransform(FLAGS_map_tf_frame, FLAGS_odom_tf_frame,
+      observation.timestamp_, transform_of2cf);
+    }
+    catch (tf::TransformException ex) {
+      ROS_ERROR("%s", ex.what());
+      return;
+    }
+
   }
 
   Eigen::Vector3d W_landmark;
@@ -141,19 +156,45 @@ void ObjectTrackingPipeline::triangulateTracks(
                                          &W_landmark);
   VLOG(1) << "Triangulated landmark at " << W_landmark;
 
-  geometry_msgs::PointStamped landmark_msg;
-  landmark_msg.header.frame_id = "odom";
-  landmark_msg.header.stamp = observations.back().timestamp_;
-  landmark_msg.point.x = W_landmark[0];
-  landmark_msg.point.y = W_landmark[1];
-  landmark_msg.point.z = W_landmark[2];
-  landmark_publisher_.publish(landmark_msg);
+
+  geometry_msgs::PointStamped landmark_msg_of;
+  landmark_msg_of.header.frame_id = FLAGS_odom_tf_frame;
+  landmark_msg_of.header.stamp = observations.back().timestamp_;
+  landmark_msg_of.point.x = W_landmark[0];
+  landmark_msg_of.point.y = W_landmark[1];
+  landmark_msg_of.point.z = W_landmark[2];
+
+  geometry_msgs::PointStamped landmark_msg_mf;
+  //std::string map = "map"; 
+  tf_listener_->transformPoint(FLAGS_map_tf_frame, landmark_msg_of, landmark_msg_mf);
+
+  landmark_publisher_.publish(landmark_msg_mf);
 
   artefact_msgs::Artefact artefact_msg;
-  artefact_msg.header = landmark_msg.header;
-  artefact_msg.landmark = landmark_msg;
+  artefact_msg.header = landmark_msg_mf.header;
+  artefact_msg.landmark = landmark_msg_mf;
   std::sort(class_labels.begin(), class_labels.end()); // Report the most observed object class.
   artefact_msg.class_label = (unsigned) class_labels[(int) class_labels.size()/2];
   artefact_msg.quality = 0; // Placeholder, not implemented yet!
   artefact_publisher_.publish(artefact_msg);
+
+  std::ifstream read_in("~/home/yoruseer/artifacts.csv", std::ofstream::app); //csv file saved /home/yoruseer/.ros/artifacts.csv
+
+  if(!read_in) {
+    artifacts.open ("~/home/yoruseer/artifacts.csv");
+    //if (!artifacts.is_open()) {
+    //}
+    artifacts<<"timestamp"<<","<<"class"<<","<<"x"<<","<<"y"<<","<<"z"<<"\n";
+    ROS_INFO("created csv");
+    artifacts.close();
+  }
+  else {
+    artifacts.open ("~/home/yoruseer/artifacts.csv", std::ofstream::app);
+    //if (!artifacts.is_open()) {
+    //}
+
+    artifacts<<landmark_msg_mf.header.stamp<<","<<artefact_msg.class_label<<","<<landmark_msg_mf.point.x<<","<<landmark_msg_mf.point.y<<","<<landmark_msg_mf.point.z<<"\n";
+    artifacts.close();
+  }
+
 }

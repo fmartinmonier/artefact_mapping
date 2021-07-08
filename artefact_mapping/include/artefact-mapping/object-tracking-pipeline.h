@@ -31,8 +31,10 @@ private:
   image_transport::Publisher debug_image_publisher_;
   ObjectTracker tracker_;
   tf::TransformListener* tf_listener_;
+  std::ofstream artifacts;
 
   vi_map::SensorManager sensor_manager_;
 };
+
 
 #endif // OBJECT_TRACKING_PIPELINE_H_

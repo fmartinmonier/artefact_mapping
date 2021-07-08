@@ -12,7 +12,7 @@ DEFINE_string(
     "Darknet model weights file path for the object tracker detections.");
 
 DEFINE_string(
-    darknet_classes, "0", "Comma separated list of classes to detect.");
+    darknet_classes, "0,46", "Comma separated list of classes to detect.");
 DEFINE_double(
     darknet_detection_threshold, 0.4f,
     "Object detection confidence threshold to start tracking or reassociate.");
@@ -80,12 +80,14 @@ void ObjectTracker::processFrame(
     darknet::image im = darknet::mat_to_image(frame_bgr);
     im = darknet::resize_image(im, net.w, net.h);
 
+
     // Swap inplace to RGB from BGR
-    for (int i = 0; i < im.w * im.h; ++i) {
+   for (int i = 0; i < im.w * im.h; ++i) {
       float swap = im.data[i];
       im.data[i] = im.data[i + im.w * im.h * 2];
       im.data[i + im.w * im.h * 2] = swap;
     }
+    
 
     const darknet::layer& l = net.layers[net.n - 1];
     darknet::network_predict(net, im.data);
