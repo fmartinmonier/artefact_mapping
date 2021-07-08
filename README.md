@@ -75,3 +75,58 @@ Detections will be published on the `W_landmark` topic in the odometry frame. Ot
 | odom_tf_frame | /odom | Odometry TF frame for triangulation |
 | publish_debug_images | false | Publish a debug topic `/artefact_mapping/debug_image` showing the detections and their tracking in real time |
 | v | 0 | Verbosity output of node, increasing to 1 or 2 will give more debug messages and information on what is being detected, tracked and published |
+
+## Running on SMB
+
+### Preliminary steps
+1. Make sur the right arguments are passed to the launch file in Artefact_Mapping/artefact_mapping/launch/artefact_mapping.launch. Thos should be: 
+    1. smb_number = 264
+    2. object_tracker_image_topic = /versavis/cam0/image_raw
+    3. darknet_cfg_path = $(find artefact_mapping)/share/yolov3.cfg
+    4. darknet_weight_path = (find artefact_mapping)/share/yolov3.weights
+    5. darknet_classes -> check with judges for correct artefacts
+    6. odom_tf_frame = /tracking_camera_odom
+    7. map_tf_frame = /map$
+    8. darknet_detection_threshold = 0.2
+    9 image_topic_buffer = 1000
+    10. Save the launch file 
+
+### Deployment
+1. Open 4 terminals
+2. In terminal 1: 
+    1. '''$ ssh team8@10.0.4.5 '''
+    2. Password: smb
+3. In terminal 2:
+    1. '''$ hostname -I''' -> Rememeber the hostname IP address
+    2. '''$ export ROS_MASTER_URI=http://10.0.4.5:11311'''
+    3. '''$ export ROS_IP=10.0.4.130''' (assuming '''$hostname -I''' returned 10.0.4.130)
+    4. '''$ cd Artefact_Mapping'''
+    5. '''$ source devel/setup.bash'''
+    6. '''$ roslaunch artefact_mapping artefact_mapping.launch'''
+4. In terminal 3:
+    1. '''$ export ROS_MASTER_URI=http://10.0.4.5:11311'''
+    2. '''$ export ROS_IP=10.0.4.130''' 
+    3. '''$ rqt_image_view'''
+    4. In rqt_image_view, select topic /versavis/cam0/image_raw. Make sure the camera feed from SMB264 is being broadcasted. You can now see what the robot is seeing
+5. In terminal 4:
+    1. '''$ export ROS_MASTER_URI=http://10.0.4.5:11311'''
+    2. '''$ export ROS_IP=10.0.4.130'''
+    3. '''rosbag record -O competition.bag /tf /tf_static /versavis/cam0/image_raw /artefact_mapping/image_debug'''
+    4. A recording the competition will be available is the home directory of this base station computer
+6. It is important to keep connection to the robot during the run. Make sure connection is reliable!
+7. Once the run is done, kill the tasks in terminal 2,3 and 4
+8. Copy the artifacts.csv file from SMB to the base station computer. In terminal 2:
+    1. '''$ scp smb264@10.0.4.5:/tmp/artifacts.csv yoruseer@10.0.4.130:/home/yoruseer'''. This should copy the rosbag from the robot to the base station computer
+
+### Post processing steps
+1. From now on, no need for any SSH connection to the robot. You should have the artifacts.csv and the competition.bag files on the base station computer
+2. Open artifacts.csv in your favorite spreadsheet software. 
+3. In a terminal, run '''$ rosbag play competition.bag -p'''. If the rosbag lasts more the 10 minutes, you can speed it up by running '''$ rosbag play competition.bag -p -r1.5''' where 1.5 is the relative speedup (to be adapted depending on how long the recording is)
+5. Run '''$ rqt_image_view'''. Select the topic /artefact_mapping/image_debug.
+4. Visible on your screen should be:
+    1. The *csv file
+    2. rqt_image_view
+    3. The terminal window with the rosbag running
+5. Click on the terminal window. Press the space bar to launch the rosbag
+6. Many false positives are to be expected in the detections. When a true positive occurs, highlight it in the csv file. Make sure the timestamp corresponds to the timestamp shown on the terminal where the rosbag is played. If things are going to quickly to appropriatly highlight the true positives, feel free to pause the rosbag playing by <strong>pressing the space bar<strong/>
+7. Once the rosbag fully played, delete all non highlighted detections. Handover this *csv file to the judges.
